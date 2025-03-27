@@ -1,0 +1,7 @@
+# Core dependencies
+openpyxl>=3.0.9
+matplotlib>=3.5.1
+numpy>=1.22.2
+
+# Web interface dependencies
+flask>=2.2.2

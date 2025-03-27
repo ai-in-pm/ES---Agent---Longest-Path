@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earned Schedule & Critical Path Analysis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+            background-color: #f8f9fa;
+        }
+        .header-container {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .container {
+            max-width: 1200px;
+        }
+        .card {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+        }
+        .card-header {
+            background-color: #f1f4f9;
+            border-bottom: 1px solid #e3e6f0;
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+        }
+        .form-control {
+            border-radius: 0.25rem;
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        .btn-primary {
+            background-color: #2a5298;
+            border-color: #2a5298;
+        }
+        .btn-primary:hover {
+            background-color: #1e3c72;
+            border-color: #1e3c72;
+        }
+        #progress-bar {
+            height: 20px;
+            transition: width 0.3s ease;
+        }
+        .result-image {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 1rem;
+            border-radius: 0.25rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .metrics-table th {
+            background-color: #f1f4f9;
+        }
+        .path-indicator {
+            width: 15px;
+            height: 15px;
+            display: inline-block;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .nav-tabs .nav-link {
+            color: #495057;
+        }
+        .nav-tabs .nav-link.active {
+            font-weight: 600;
+            color: #2a5298;
+            border-bottom: 2px solid #2a5298;
+        }
+        .card-body {
+            padding: 1.5rem;
+        }
+        .alert-info {
+            background-color: #e8f4fd;
+            border-color: #b8daff;
+        }
+        .table-responsive {
+            border-radius: 0.25rem;
+            overflow: hidden;
+        }
+        .text-danger { color: #dc3545 !important; }
+        .text-success { color: #28a745 !important; }
+        .text-warning { color: #ffc107 !important; }
+        .analysis-log {
+            height: 200px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            padding: 0.5rem;
+            font-family: monospace;
+            margin-bottom: 1rem;
+        }
+        .log-entry {
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid #f1f1f1;
+            padding-bottom: 0.5rem;
+        }
+        /* Animation for the execute button */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .btn-execute {
+            animation: pulse 2s infinite;
+            background-color: #28a745;
+            border-color: #28a745;
+            font-weight: bold;
+            padding: 0.75rem 2rem;
+            font-size: 1.1rem;
+        }
+        .btn-execute:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-container text-center">
+            <h1><i class="bi bi-graph-up"></i> Earned Schedule & Critical Path Analysis</h1>
+            <p class="lead">Advanced project forecasting using Earned Schedule (ES) and Critical Path Method (CPM)</p>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-upload"></i> Upload Project Data
+                    </div>
+                    <div class="card-body">
+                        <form id="upload-form">
+                            <div class="mb-3">
+                                <label for="file" class="form-label">Excel file (.xlsx):</label>
+                                <input class="form-control" type="file" id="file" accept=".xlsx" required>
+                                <div class="form-text">Upload your project Excel file with PV, EV data and path information.</div>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-execute btn-lg">
+                                    <i class="bi bi-play-circle"></i> Execute Analysis
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card" id="status-card" style="display: none;">
+                    <div class="card-header">
+                        <i class="bi bi-activity"></i> Analysis Status
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="progress" role="progressbar">
+                                <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <p id="status-message" class="mb-2">Waiting to start analysis...</p>
+                        <div class="analysis-log" id="analysis-log">
+                            <!-- Log entries will be added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card" id="results-card" style="display: none;">
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs" id="resultTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="true">
+                                    <i class="bi bi-clipboard-data"></i> Summary
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="visualizations-tab" data-bs-toggle="tab" data-bs-target="#visualizations" type="button" role="tab" aria-controls="visualizations" aria-selected="false">
+                                    <i class="bi bi-bar-chart"></i> Visualizations
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="paths-tab" data-bs-toggle="tab" data-bs-target="#paths" type="button" role="tab" aria-controls="paths" aria-selected="false">
+                                    <i class="bi bi-diagram-3"></i> Path Analysis
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="metrics-tab" data-bs-toggle="tab" data-bs-target="#metrics" type="button" role="tab" aria-controls="metrics" aria-selected="false">
+                                    <i class="bi bi-table"></i> Metrics
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content" id="resultTabContent">
+                            <!-- Summary Tab -->
+                            <div class="tab-pane fade show active" id="summary" role="tabpanel" aria-labelledby="summary-tab">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="alert alert-info" role="alert">
+                                            <h4 class="alert-heading"><i class="bi bi-info-circle"></i> Analysis Complete!</h4>
+                                            <p>The AI agent has analyzed your project using Earned Schedule and Critical Path methods.</p>
+                                        </div>
+                                        
+                                        <div class="row" id="summary-cards">
+                                            <!-- Summary cards will be added here -->
+                                        </div>
+                                        
+                                        <h5 class="mt-4">Final Forecast</h5>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-sm" id="forecast-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Metric</th>
+                                                        <th>Value</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Forecast data will be added here -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Visualizations Tab -->
+                            <div class="tab-pane fade" id="visualizations" role="tabpanel" aria-labelledby="visualizations-tab">
+                                <div class="row" id="visualization-images">
+                                    <!-- Visualization images will be added here -->
+                                </div>
+                            </div>
+
+                            <!-- Path Analysis Tab -->
+                            <div class="tab-pane fade" id="paths" role="tabpanel" aria-labelledby="paths-tab">
+                                <h5>Controlling Path by Period</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover table-sm" id="controlling-path-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Period</th>
+                                                <th>Controlling Path</th>
+                                                <th>IEAC(t)</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Path data will be added here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <h5 class="mt-4">Anomalies Detected</h5>
+                                <div id="anomalies-container">
+                                    <!-- Anomalies will be added here -->
+                                </div>
+                            </div>
+
+                            <!-- Metrics Tab -->
+                            <div class="tab-pane fade" id="metrics" role="tabpanel" aria-labelledby="metrics-tab">
+                                <h5>Overall Project Metrics</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover table-sm metrics-table" id="metrics-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Period</th>
+                                                <th>ES</th>
+                                                <th>SPI(t)</th>
+                                                <th>IEAC(t)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Metrics data will be added here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" id="welcome-card">
+                    <div class="card-body">
+                        <h4 class="card-title"><i class="bi bi-info-circle"></i> How It Works</h4>
+                        <p class="card-text">This AI agent analyzes project schedules using both Critical Path Method (CPM) and Earned Schedule (ES) techniques to identify the true "Longest Path" of your project.</p>
+                        
+                        <h5>Key Features:</h5>
+                        <ul>
+                            <li><strong>Earned Schedule Calculation:</strong> Converts earned value into time units for more reliable schedule analysis</li>
+                            <li><strong>Path-Specific Analysis:</strong> Applies ES calculations to individual project paths to identify the controlling path</li>
+                            <li><strong>Anomaly Detection:</strong> Identifies and filters out abnormal forecasts</li>
+                            <li><strong>Dynamic Critical Path:</strong> Tracks which path is truly controlling the project at each update period</li>
+                            <li><strong>Visualization:</strong> Generates informative charts showing PV/EV curves, SPI(t) trends, and completion forecasts</li>
+                        </ul>
+                        
+                        <h5>Getting Started:</h5>
+                        <ol>
+                            <li>Upload your Excel file containing project data</li>
+                            <li>Click the "Execute Analysis" button</li>
+                            <li>Review the results and visualizations</li>
+                        </ol>
+                        
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> <strong>Note:</strong> Your Excel file should contain Planned Value (PV) and Earned Value (EV) data, as well as path information. See the README for detailed format requirements.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const uploadForm = document.getElementById('upload-form');
+            const statusCard = document.getElementById('status-card');
+            const resultsCard = document.getElementById('results-card');
+            const welcomeCard = document.getElementById('welcome-card');
+            const progressBar = document.getElementById('progress-bar');
+            const statusMessage = document.getElementById('status-message');
+            const analysisLog = document.getElementById('analysis-log');
+            
+            // Status polling interval
+            let statusInterval = null;
+            
+            // Add log entry
+            function addLogEntry(message) {
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                analysisLog.appendChild(logEntry);
+                analysisLog.scrollTop = analysisLog.scrollHeight;
+            }
+            
+            // Handle form submission
+            uploadForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+                const fileInput = document.getElementById('file');
+                if (!fileInput.files.length) {
+                    alert('Please select a file to upload');
+                    return;
+                }
+                
+                const file = fileInput.files[0];
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                // Show status card and hide welcome card
+                statusCard.style.display = 'block';
+                welcomeCard.style.display = 'none';
+                resultsCard.style.display = 'none';
+                
+                // Reset progress and log
+                progressBar.style.width = '0%';
+                statusMessage.textContent = 'Starting analysis...';
+                analysisLog.innerHTML = '';
+                addLogEntry('Uploading file: ' + file.name);
+                
+                // Disable submit button
+                const submitButton = uploadForm.querySelector('button[type="submit"]');
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+                
+                // Upload file and start analysis
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        addLogEntry('Error: ' + data.error);
+                        alert('Error: ' + data.error);
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = '<i class="bi bi-play-circle"></i> Execute Analysis';
+                        return;
+                    }
+                    
+                    addLogEntry('Analysis started');
+                    
+                    // Start polling for status
+                    statusInterval = setInterval(checkStatus, 1000);
+                })
+                .catch(error => {
+                    addLogEntry('Error uploading file: ' + error.message);
+                    alert('Error uploading file: ' + error.message);
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="bi bi-play-circle"></i> Execute Analysis';
+                });
+            });
+            
+            // Check analysis status
+            function checkStatus() {
+                fetch('/status')
+                .then(response => response.json())
+                .then(data => {
+                    progressBar.style.width = data.progress + '%';
+                    statusMessage.textContent = data.message;
+                    
+                    // If message changed, add to log
+                    if (statusMessage.dataset.lastMessage !== data.message) {
+                        addLogEntry(data.message);
+                        statusMessage.dataset.lastMessage = data.message;
+                    }
+                    
+                    // If completed, stop polling and show results
+                    if (data.completed) {
+                        clearInterval(statusInterval);
+                        
+                        if (data.error) {
+                            addLogEntry('Analysis failed: ' + data.error);
+                            alert('Analysis failed: ' + data.error);
+                            const submitButton = uploadForm.querySelector('button[type="submit"]');
+                            submitButton.disabled = false;
+                            submitButton.innerHTML = '<i class="bi bi-play-circle"></i> Execute Analysis';
+                            return;
+                        }
+                        
+                        addLogEntry('Analysis completed successfully');
+                        showResults(data.results);
+                        
+                        // Re-enable submit button
+                        const submitButton = uploadForm.querySelector('button[type="submit"]');
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = '<i class="bi bi-play-circle"></i> Execute Analysis';
+                    }
+                })
+                .catch(error => {
+                    addLogEntry('Error checking status: ' + error.message);
+                    clearInterval(statusInterval);
+                    const submitButton = uploadForm.querySelector('button[type="submit"]');
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="bi bi-play-circle"></i> Execute Analysis';
+                });
+            }
+            
+            // Show results
+            function showResults(results) {
+                if (!results) return;
+                
+                // Show results card
+                resultsCard.style.display = 'block';
+                
+                // Populate summary
+                const summaryCards = document.getElementById('summary-cards');
+                summaryCards.innerHTML = `
+                    <div class="col-md-4">
+                        <div class="card text-white bg-primary">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">IEAC(t)</h5>
+                                <p class="display-4">${results.final_ieac.toFixed(2)}</p>
+                                <p class="card-text">Estimated Completion (periods)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-white bg-success">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Controlling Path</h5>
+                                <p class="display-5">${results.final_path}</p>
+                                <p class="card-text">Final determining path</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-white bg-info">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">SPI(t)</h5>
+                                <p class="display-4">${results.overall_metrics[results.overall_metrics.length-1].spi_t.toFixed(2)}</p>
+                                <p class="card-text">Schedule Performance Index</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Populate forecast table
+                const forecastTable = document.getElementById('forecast-table').querySelector('tbody');
+                const lastPeriod = results.overall_metrics.length - 1;
+                forecastTable.innerHTML = `
+                    <tr>
+                        <td>Final Period</td>
+                        <td>${lastPeriod}</td>
+                    </tr>
+                    <tr>
+                        <td>Final ES</td>
+                        <td>${results.overall_metrics[lastPeriod].es.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td>Final SPI(t)</td>
+                        <td>${results.overall_metrics[lastPeriod].spi_t.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td>Final IEAC(t)</td>
+                        <td>${results.overall_metrics[lastPeriod].ieac_t.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td>Final Controlling Path</td>
+                        <td>${results.final_path}</td>
+                    </tr>
+                    <tr>
+                        <td>Anomalies Detected</td>
+                        <td>${results.anomalies.length}</td>
+                    </tr>
+                `;
+                
+                // Populate visualizations
+                const visualizationImages = document.getElementById('visualization-images');
+                visualizationImages.innerHTML = '';
+                
+                results.images.forEach(image => {
+                    const title = image.name.replace('.png', '').replace(/_/g, ' ');
+                    visualizationImages.innerHTML += `
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header">${title.charAt(0).toUpperCase() + title.slice(1)}</div>
+                                <div class="card-body text-center">
+                                    <img src="${image.url}" class="result-image" alt="${title}">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                // Populate path analysis
+                const controllingPathTable = document.getElementById('controlling-path-table').querySelector('tbody');
+                controllingPathTable.innerHTML = '';
+                
+                results.controlling_path.forEach(entry => {
+                    const period = entry.period;
+                    const path = entry.path;
+                    let ieac = 'N/A';
+                    let status = '';
+                    
+                    // Find IEAC for this path and period
+                    if (results.path_metrics[path] && 
+                        results.path_metrics[path][period]) {
+                        ieac = results.path_metrics[path][period].ieac_t.toFixed(2);
+                        
+                        // Determine status
+                        if (ieac > 1.2 * results.overall_metrics[0].ieac_t) {
+                            status = '<span class="text-danger">Critical Delay</span>';
+                        } else if (ieac > 1.05 * results.overall_metrics[0].ieac_t) {
+                            status = '<span class="text-warning">Minor Delay</span>';
+                        } else if (ieac < 0.95 * results.overall_metrics[0].ieac_t) {
+                            status = '<span class="text-success">Ahead of Schedule</span>';
+                        } else {
+                            status = '<span class="text-secondary">On Track</span>';
+                        }
+                    }
+                    
+                    // Check if this period has an anomaly
+                    const anomaly = results.anomalies.find(a => a.period === period);
+                    if (anomaly) {
+                        status = '<span class="text-danger"><i class="bi bi-exclamation-triangle"></i> Anomaly</span>';
+                    }
+                    
+                    controllingPathTable.innerHTML += `
+                        <tr>
+                            <td>${period}</td>
+                            <td>${path}</td>
+                            <td>${ieac}</td>
+                            <td>${status}</td>
+                        </tr>
+                    `;
+                });
+                
+                // Populate anomalies
+                const anomaliesContainer = document.getElementById('anomalies-container');
+                if (results.anomalies.length === 0) {
+                    anomaliesContainer.innerHTML = '<div class="alert alert-success">No anomalies detected in the analysis.</div>';
+                } else {
+                    let anomaliesHTML = '<div class="table-responsive"><table class="table table-bordered table-sm"><thead><tr><th>Period</th><th>Path</th><th>IEAC</th><th>Description</th></tr></thead><tbody>';
+                    
+                    results.anomalies.forEach(anomaly => {
+                        anomaliesHTML += `
+                            <tr>
+                                <td>${anomaly.period}</td>
+                                <td>${anomaly.path}</td>
+                                <td>${anomaly.ieac.toFixed(2)}</td>
+                                <td>Abnormal spike in IEAC value</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    anomaliesHTML += '</tbody></table></div>';
+                    anomaliesContainer.innerHTML = anomaliesHTML;
+                }
+                
+                // Populate metrics table
+                const metricsTable = document.getElementById('metrics-table').querySelector('tbody');
+                metricsTable.innerHTML = '';
+                
+                results.overall_metrics.forEach(metric => {
+                    let rowClass = '';
+                    
+                    // Check if this period has an anomaly
+                    const anomaly = results.anomalies.find(a => a.period === metric.period);
+                    if (anomaly) {
+                        rowClass = 'table-warning';
+                    }
+                    
+                    metricsTable.innerHTML += `
+                        <tr class="${rowClass}">
+                            <td>${metric.period}</td>
+                            <td>${metric.es.toFixed(2)}</td>
+                            <td>${metric.spi_t.toFixed(2)}</td>
+                            <td>${metric.ieac_t.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
