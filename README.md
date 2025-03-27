@@ -4,7 +4,7 @@ This project implements an AI agent that analyzes project schedules using both C
 
 The development of this repository was inspired by the Earned Schedule Community in their development of Earned Schedule tools. To learn more visit https://www.earnedschedule.com/Calculator.shtml
 
-
+https://github.com/user-attachments/assets/257f16fb-ab1a-45b5-9409-93784afcc8d0
 
 ## Key Features
 
