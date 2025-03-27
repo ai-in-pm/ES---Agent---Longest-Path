@@ -2,6 +2,10 @@
 
 This project implements an AI agent that analyzes project schedules using both Critical Path Method (CPM) and Earned Schedule (ES) techniques. It identifies the true "Longest Path" of a project and provides accurate forecasts of project completion times based on current progress.
 
+The development of this repository was inspired by the Earned Schedule Community in their development of Earned Schedule tools. To learn more visit https://www.earnedschedule.com/Calculator.shtml
+
+
+
 ## Key Features
 
 - **Earned Schedule Calculation**: Converts earned value into time units for more reliable schedule analysis
